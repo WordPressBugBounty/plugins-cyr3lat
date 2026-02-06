@@ -3,14 +3,14 @@
  * Plugin Name:       Cyr to Lat Enhanced
  * Plugin URI:        https://wordpress.org/plugins/cyr3lat/
  * Description:       Converts Cyrillic, European and Georgian characters in post and term slugs, and media file names to Latin characters. Useful for creating human-readable URLs.
- * Version:           3.7.2
+ * Version:           3.7.3
  * Requires at least: 5.0
  * Requires PHP:      7.4
  * Author:            Ivijan Stefan Stipic
  * Author URI:        https://www.linkedin.com/in/ivijanstefanstipic/
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       cyr-to-lat-enhanced
+ * Text Domain:       cyr3lat
  * Domain Path:       /languages
  *
  * Credits:
@@ -26,6 +26,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class CTL_Enhanced {
 
+	/**
+	 * Plugin version.
+	 */
+	private const VERSION = '3.7.3';
+
     /**
      * Cron hook name for background conversion.
      */
@@ -40,6 +45,16 @@ final class CTL_Enhanced {
      * Batch size to reduce timeouts.
      */
     private const BATCH_SIZE = 200;
+	
+	/**
+	 * WordPress.org plugin slug.
+	 */
+	private const WPORG_SLUG = 'cyr3lat';
+
+	/**
+	 * Transient key used to cache WordPress.org rating data.
+	 */
+	private const TRANSIENT_WPORG_RATE = 'ctl_enhanced_wporg_rating_v1';
 
     /**
      * Cached transliteration table per-locale.
@@ -52,6 +67,7 @@ final class CTL_Enhanced {
      * Bootstrap plugin.
      */
     public static function init(): void {
+		add_filter( 'plugin_row_meta', [ __CLASS__, 'plugin_meta' ], 10, 2 );
         add_filter( 'sanitize_title', [ __CLASS__, 'filter_sanitize_title' ], 9, 3 );
         add_filter( 'sanitize_file_name', [ __CLASS__, 'filter_sanitize_file_name' ], 10, 2 );
 
@@ -60,6 +76,60 @@ final class CTL_Enhanced {
         register_activation_hook( __FILE__, [ __CLASS__, 'on_activation' ] );
         register_deactivation_hook( __FILE__, [ __CLASS__, 'on_deactivation' ] );
     }
+	
+	/**
+	 * Add extra links to plugin row meta on Plugins page.
+	 *
+	 * @param array  $links Plugin row meta links.
+	 * @param string $file  Plugin base file.
+	 * @return array
+	 */
+	public static function plugin_meta( array $links, string $file ): array {
+
+		if ( $file !== plugin_basename( __FILE__ ) ) {
+			return $links;
+		}
+
+		$advanced_plugin = 'serbian-transliteration/serbian-transliteration.php';
+
+		// is_plugin_active() is not always loaded on every admin screen.
+		if ( is_admin() && ! function_exists( 'is_plugin_active' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		// Show link ONLY if the advanced plugin is NOT active.
+		if ( function_exists( 'is_plugin_active' ) && ! is_plugin_active( $advanced_plugin ) ) {
+
+			$links[] = sprintf(
+				'<a href="%s" class="thickbox" title="%s">%s</a>',
+				esc_url(
+					admin_url(
+						'plugin-install.php?tab=plugin-information&plugin=serbian-transliteration&TB_iframe=true&width=772&height=857'
+					)
+				),
+				esc_attr__( 'Advanced Transliteration', 'cyr3lat' ),
+				esc_html__( 'Advanced Transliteration', 'cyr3lat' )
+			);
+		}
+
+		// Optional: neutral support link (safer than "5 stars" nudges).
+		$links[] = sprintf(
+			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+			esc_url( 'https://wordpress.org/support/plugin/cyr3lat/' ),
+			esc_html__( 'Support', 'cyr3lat' )
+		);
+		
+		$stars = self::get_wporg_rating_stars();
+		$links[] = sprintf(
+			'<a href="%s" target="_blank" rel="noopener noreferrer" aria-label="%s" title="%s"><span style="color:#ffa000; font-size: 15px; bottom: -1px; position: relative;">%s</span></a>',
+			esc_url( 'https://wordpress.org/support/plugin/cyr3lat/reviews/?filter=5#new-post' ),
+			esc_attr__( 'Plugin reviews', 'cyr3lat' ),
+			esc_attr__( 'View plugin reviews on WordPress.org', 'cyr3lat' ),
+			esc_html( $stars )
+		);
+
+		return $links;
+	}
 
     /**
      * Activation: schedule background conversion (single event).
@@ -506,6 +576,113 @@ final class CTL_Enhanced {
 		}
 
 		return $size;
+	}
+	
+	/**
+	 * Get WordPress.org rating stars string, cached.
+	 *
+	 * @return string
+	 */
+	private static function get_wporg_rating_stars(): string {
+		$cached = get_transient( self::TRANSIENT_WPORG_RATE );
+
+		if ( is_array( $cached ) && isset( $cached['stars'] ) && is_string( $cached['stars'] ) ) {
+			return $cached['stars'];
+		}
+
+		$percent = self::fetch_wporg_rating_percent();
+
+		// If API fails, avoid saving a bad value.
+		if ( $percent <= 0 ) {
+			return '★★★★★';
+		}
+
+		$stars = self::format_stars_from_percent( $percent );
+
+		set_transient(
+			self::TRANSIENT_WPORG_RATE,
+			[
+				'percent' => $percent,
+				'stars'   => $stars,
+				'ts'      => time(),
+			],
+			12 * HOUR_IN_SECONDS
+		);
+
+		return $stars;
+	}
+
+	/**
+	 * Fetch rating percent (0-100) from WordPress.org Plugin API.
+	 *
+	 * @return int
+	 */
+	private static function fetch_wporg_rating_percent(): int {
+		$url = add_query_arg(
+			[
+				'action' => 'plugin_information',
+				'slug'   => self::WPORG_SLUG,
+			],
+			'https://api.wordpress.org/plugins/info/1.2/'
+		);
+
+		$response = wp_remote_get(
+			$url,
+			[
+				'timeout'     => 3,
+				'redirection' => 2,
+				'user-agent' => 'CTL-Enhanced/' . self::VERSION . '; ' . home_url(),
+			]
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return 0;
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		if ( $code < 200 || $code >= 300 ) {
+			return 0;
+		}
+
+		$body = (string) wp_remote_retrieve_body( $response );
+		if ( '' === $body ) {
+			return 0;
+		}
+
+		$data = json_decode( $body, true );
+		if ( ! is_array( $data ) || ! isset( $data['rating'] ) ) {
+			return 0;
+		}
+
+		$percent = (int) $data['rating'];
+		if ( $percent < 0 ) {
+			$percent = 0;
+		} elseif ( $percent > 100 ) {
+			$percent = 100;
+		}
+
+		return $percent;
+	}
+
+	/**
+	 * Convert rating percent (0-100) to star string using ★⯪☆ symbols.
+	 * Example: 90% -> 4.5 -> "★★★★⯪"
+	 *
+	 * @param int $percent
+	 * @return string
+	 */
+	private static function format_stars_from_percent( int $percent ): string {
+		$score = $percent / 20; // 0..5
+		$score = round( $score * 2 ) / 2; // round to 0.5 steps
+
+		$full = (int) floor( $score );
+		$half = ( ( $score - $full ) >= 0.5 ) ? 1 : 0;
+
+		$full  = max( 0, min( 5, $full ) );
+		$half  = max( 0, min( 1, $half ) );
+		$empty = 5 - $full - $half;
+
+		return str_repeat( '★', $full ) . ( $half ? '⯪' : '' ) . str_repeat( '☆', $empty );
 	}
 }
 

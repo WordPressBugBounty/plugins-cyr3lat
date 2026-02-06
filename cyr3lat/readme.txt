@@ -3,7 +3,7 @@ Contributors: ivijanstefan, creativform, Atrax, SergeyBiryukov, karevn, webvital
 Tags: cyrillic, transliteration, russian, ukrainian, slugs
 Requires at least: 2.3
 Tested up to: 6.9
-Stable tag: 3.7.2
+Stable tag: 3.7.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -105,7 +105,35 @@ function my_ctl_modify_filename( $filename, $source ) {
 add_filter( 'ctl_enhanced_sanitized_file_name', 'my_ctl_modify_filename', 10, 2 );
 `
 
+= What is the difference between Cyr to Lat Enhanced, cyr2lat and Transliterator? =
+
+Cyr to Lat Enhanced is a continuation of the original cyr2lat / cyr3lat lineage.
+Its purpose is strictly limited to transliteration of post slugs, term slugs and media file names.
+
+The original [cyr2lat](https://wordpress.org/plugins/cyr2lat/) plugin by Sergey Biryukov introduced a simple and effective way to generate Latin slugs from Cyrillic titles.
+Cyr to Lat Enhanced preserves this philosophy while modernizing the codebase, improving reliability and ensuring compatibility with current WordPress versions.
+
+[Transliterator](https://wordpress.org/plugins/serbian-transliteration/) is a separate plugin with a different scope and goals.
+It is designed for advanced and complex use cases, including:
+- transliteration of post content and front-end text
+- bidirectional conversion (Latin and Cyrillic)
+- extended language rules and exclusions
+- fine-grained control over when and where transliteration is applied
+
+Because these plugins solve different problems, they are intentionally separated.
+Cyr to Lat Enhanced focuses on clean URLs and file names with zero configuration.
+Transliterator focuses on full-language processing and advanced multilingual setups.
+
+Users should choose the plugin that best matches their needs:
+- use Cyr to Lat Enhanced for simple, automatic slug and filename transliteration
+- use [Transliterator](https://wordpress.org/plugins/serbian-transliteration/) when full content-level transliteration is required
+
 == Changelog ==
+
+= 3.7.3 =
+* Minor improvements to plugin metadata presentation in the WordPress admin.
+* Improved robustness and consistency of internal admin-only logic.
+* No changes to front-end behavior or existing URLs.
 
 = 3.7.2 =
 * Added filter support for adjusting background batch size during slug conversion.
