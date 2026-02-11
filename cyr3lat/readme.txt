@@ -1,4 +1,4 @@
-=== Cyr to Lat enhanced ===
+=== Cyr to Lat Enhanced ===
 Contributors: ivijanstefan, creativform, Atrax, SergeyBiryukov, karevn, webvitaly
 Tags: cyrillic, transliteration, russian, ukrainian, slugs
 Requires at least: 2.3
@@ -7,41 +7,51 @@ Stable tag: 3.7.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Converts Cyrillic, European and Georgian characters in post, page and term slugs to Latin characters.
+Converts Cyrillic, European and Georgian characters in post, term slugs and media file names into Latin characters.
 
 == Description ==
 
-Cyr to Lat Enhanced converts Cyrillic, European and Georgian characters in post slugs, term slugs and media file names into Latin characters. It helps ensure clean, readable and consistent URLs on WordPress sites that use non-Latin scripts.
+Cyr to Lat Enhanced automatically converts Cyrillic, European and Georgian characters in post slugs, term slugs and media file names into Latin characters.  
+It helps maintain clean, readable and consistent URLs on WordPress sites that use non-Latin scripts.
 
-The plugin integrates directly with WordPress sanitization and performs transliteration at the moment slugs and filenames are generated. It does not modify post content, titles or any front-end text. Its scope is strictly limited to slugs and media file names.
+The plugin integrates directly with WordPress core sanitization (`sanitize_title` and `sanitize_file_name`) and performs transliteration at the moment slugs and filenames are generated.  
+It does **not** modify post content, titles or front-end text. Its scope is strictly limited to URLs and file names.
 
-On activation, existing post and term slugs are converted in the background using safe, batch-based processing. WordPress core APIs are used to preserve permalink integrity and existing redirects.
+On activation, existing post and term slugs are converted in the background using safe, batch-based processing via WP-Cron.  
+WordPress core APIs are used to preserve permalink integrity and existing redirects.
 
-Transliteration is based on an ISO 9-style mapping table with support for Russian, Belarusian, Ukrainian, Bulgarian, Macedonian and Georgian characters. Locale-specific adjustments are applied automatically, and the transliteration table can be customized via a public filter.
+Transliteration is based on an ISO 9-style mapping table with built-in support for:
+- Russian
+- Belarusian
+- Ukrainian
+- Bulgarian
+- Macedonian
+- Georgian
 
-Cyr to Lat Enhanced is intentionally lightweight and focused. It provides no admin interface, no settings pages and no bidirectional conversion. The plugin does not collect data, track users or perform any actions outside its defined purpose.
+Locale-specific adjustments are applied automatically, and the transliteration table can be customized using a public filter.
 
-The plugin continues the cyr2lat / cyr3lat lineage, including compatibility with the original [cyr2lat](https://wordpress.org/plugins/cyr2lat/) plugin by Sergey Biryukov.
+Cyr to Lat Enhanced is intentionally lightweight and focused:
+- no admin interface
+- no settings pages
+- no bidirectional conversion
+- no data collection or tracking
 
-= Advanced Transliteration =
+The plugin continues the cyr2lat / cyr3lat lineage and remains compatible with the original approach introduced by Sergey Biryukov.
 
-For more advanced transliteration needs, including extended language support, bidirectional conversion, content-level processing and additional controls, consider the [Transliterator plugin](https://wordpress.org/plugins/serbian-transliteration/).
+== Advanced Transliteration ==
 
-Transliterator is designed for complex multilingual setups and offers significantly broader functionality beyond slug and filename transliteration.
+For advanced transliteration needs such as full content conversion, bidirectional processing, extended language rules and fine-grained control, consider the separate plugin:
+https://wordpress.org/plugins/serbian-transliteration/
 
-Sponsored by: [INFINITUM FORM](https://infinitumform.com/)
-
-= Adoption Notice =
-
-This plugin represents the continued development of the original "Cyr to Lat enhanced" created by Sergey Biryukov (@sergeybiryukov).
-
-The project has been revived with the intention of ensuring long-term stability, modern compatibility, and responsible maintenance while preserving the core functionality that made the original plugin widely used.
+That plugin is designed for complex multilingual setups and broader language processing beyond slugs and file names.
 
 == Installation ==
 
 1. Upload the `cyr3lat` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the "Plugins" menu in WordPress.
-3. If your environment has `iconv` enabled, the plugin will use it as a best-effort fallback. If you experience trimmed slugs, unexpected characters, or question marks, please open a support topic and include your server OS, PHP version, and locale.
+3. If `iconv` is available on your server, it will be used as a best-effort fallback.
+
+If you experience unexpected characters in slugs, please open a support topic and include your server OS, PHP version and site locale.
 
 == Frequently Asked Questions ==
 
@@ -205,21 +215,19 @@ Users should choose the plugin that best matches their needs:
 
 == Adoption Notice ==
 
-This plugin represents the continued maintenance of the original "Cyr to Lat Enhanced" project, originally developed within the cyr3lat lineage.
+This plugin represents the continued maintenance of the original "Cyr to Lat Enhanced" project from the cyr3lat lineage.
 
-The project is actively maintained to ensure long-term stability, modern WordPress compatibility and responsible upkeep, while preserving the core functionality that made the plugin widely adopted.
-
-No user data is collected, no tracking is performed, and the plugin remains focused on its original purpose: slug and filename transliteration.
+The project has been revived to ensure long-term stability, modern WordPress compatibility and responsible maintenance, while preserving the original behavior and purpose.
 
 == Credits ==
 
 Original upstream concept: Rus-To-Lat by Anton Skorobogatov  
-cyr2lat / cyr3lat lineage contributors: karevn, Atrax, SergeyBiryukov, webvitaly
+cyr2lat / cyr3lat lineage contributors: karevn, Atrax, Sergey Biryukov, webvitaly
 
-Maintainer and current developer: Ivijan Stefan Stipic (INFINITUM FORM)
+Maintainer: Ivijan Stefan Stipic (INFINITUM FORM)
 
 == Legal Notice ==
 
-This plugin retains the original GPL license from the upstream versions.
+This plugin is licensed under the GPLv2 or later license.
 
-All new contributions are (c) 2025 Ivijan Stefan Stipic and released under the same GPLv2-or-later license.
+All new contributions are released under the same license.
